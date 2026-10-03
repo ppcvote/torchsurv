@@ -3,6 +3,7 @@ import json
 import warnings
 
 import numpy as np
+import pytest
 import torch
 from sksurv.metrics import brier_score as brier_score_sksurv
 from sksurv.metrics import (
@@ -272,23 +273,17 @@ def test_zero_standard_error_warns_when_only_some_time_points_are_degenerate():
     partly_degenerate = _brier_score_with_residuals([varying, constant, varying])
     assert int((partly_degenerate._brier_score_se() == 0).sum()) == 1
 
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
+    with pytest.warns(Warning, match="standard error"):
         partly_degenerate._confidence_interval_parametric(alpha=0.05, alternative="two_sided")
-    assert _warned_about_zero_se(caught)
 
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
+    with pytest.warns(Warning, match="standard error"):
         partly_degenerate._p_value_parametric(null_value=0.25, alternative="two_sided")
-    assert _warned_about_zero_se(caught)
 
     # Controls: the all-zero case already warned and must keep doing so, and a
     # well-behaved vector must not start warning.
     all_degenerate = _brier_score_with_residuals([constant, constant])
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
+    with pytest.warns(Warning, match="standard error"):
         all_degenerate._confidence_interval_parametric(alpha=0.05, alternative="two_sided")
-    assert _warned_about_zero_se(caught)
 
     none_degenerate = _brier_score_with_residuals([varying, varying])
     with warnings.catch_warnings(record=True) as caught:
